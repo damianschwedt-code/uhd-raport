@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UHD — Raport dzienny</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;font-size:13px;background:#f0f4f8;color:#1a1a1a;padding:24px;}
+h1{font-size:19px;font-weight:700;color:#1a3a5c;margin-bottom:3px;}
+.subtitle{font-size:12px;color:#666;margin-bottom:20px;}
+.toolbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.toolbar button{font-size:13px;padding:7px 16px;border-radius:6px;border:1px solid #c8d6e5;background:#fff;cursor:pointer;color:#1a3a5c;}
+.toolbar button:hover{background:#e6f1fb;}
+.toolbar button.primary{background:#1a3a5c;color:#fff;border-color:#1a3a5c;}
+.toolbar button.primary:hover{background:#0f2540;}
+.section-title{font-size:14px;font-weight:600;color:#1a3a5c;margin:26px 0 8px;border-left:3px solid #2563a8;padding-left:10px;}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #c8d6e5;background:#fff;margin-bottom:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+table{border-collapse:collapse;width:100%;font-size:12px;}
+thead tr th{background:#1a3a5c;color:#fff;padding:9px 10px;font-weight:500;text-align:center;white-space:nowrap;font-size:11px;}
+tbody tr:nth-child(odd){background:#f4f8fd;}
+tbody tr:nth-child(even){background:#fff;}
+tbody tr:hover{background:#dbeafe44;}
+td{padding:7px 10px;border-bottom:1px solid #e8eef5;vertical-align:middle;text-align:center;}
+td[contenteditable="true"]{cursor:text;outline:none;}
+td[contenteditable="true"]:focus{background:#fffbeb!important;box-shadow:inset 0 0 0 1.5px #2563a8;border-radius:3px;}
+.cat-cell{background:#1a3a5c!important;color:#fff!important;font-weight:600;font-size:12px;text-align:center;vertical-align:middle;border-right:2px solid #0f2540;}
+select.isel{font-size:11px;border:1px solid #c8d6e5;border-radius:4px;padding:2px 4px;background:#fff;color:#1a1a1a;}
+.jira-a{color:#2563a8;text-decoration:none;font-size:11px;font-weight:500;}
+.jira-a:hover{text-decoration:underline;}
+.jira-i{font-size:10px;border:1px solid #c8d6e5;border-radius:3px;padding:1px 4px;width:100%;margin-top:3px;background:#f8fafc;color:#555;}
+.del-btn{font-size:11px;color:#c0392b;cursor:pointer;padding:2px 5px;border-radius:3px;background:none;border:none;opacity:0.5;}
+.del-btn:hover{opacity:1;background:#fde8e8;}
+.add-row-btn{font-size:12px;padding:6px 12px;margin-top:6px;border-radius:6px;border:1px dashed #aac4e0;background:transparent;cursor:pointer;color:#2563a8;width:100%;}
+.add-row-btn:hover{background:#e6f1fb;}
+.notice{font-size:11px;color:#888;margin-top:5px;}
+.rank-badge{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#2563a8;color:#fff;font-size:11px;font-weight:600;align-items:center;justify-content:center;}
+.r1{background:#c0392b;}.r2{background:#d35400;}.r3{background:#1a6ebf;}
+.seg-pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;background:#e6f1fb;color:#0c447c;font-weight:500;}
+.empty-pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;background:#f1f1ee;color:#aaa;}
+.msel{font-size:13px;padding:5px 10px;border-radius:6px;border:1px solid #c8d6e5;background:#fff;color:#1a1a1a;}
+.crow{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.crow label{font-size:13px;color:#555;}
+.bfut{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;background:#faeeda;color:#854f0b;font-weight:500;}
+.bp1{background:#fde8e8;color:#a31d1d;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.bp2{background:#faeeda;color:#854f0b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.bzamk{background:#eaf3de;color:#3b6d11;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.botw{background:#fde8e8;color:#a31d1d;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+.hbar{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.logo{font-size:11px;color:#aaa;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="hbar">
+  <div><h1>UHD — Raport dzienny</h1><p class="subtitle">Edytuj tabele i kliknij "Kopiuj do Gmaila".</p></div>
+  <div class="logo">locon.pl</div>
+</div>
+<div class="toolbar">
+  <button class="primary" onclick="copyAll()">📋 Kopiuj do Gmaila</button>
+  <button onclick="addAw()">+ Wiersz (awaria)</button>
+  <button onclick="addRej()">+ Wiersz (rejestr)</button>
+  <button onclick="addT10()">+ Wiersz (TOP 10)</button>
+  <button onclick="resetAll()">↺ Resetuj</button>
+</div>
+
+<!-- WSTĘP -->
+<div class="section-title" style="margin-top:0;">Wstęp raportu</div>
+<div style="background:#fff;border-radius:10px;border:1px solid #c8d6e5;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:22px 24px;margin-bottom:6px;">
+
+  <p style="font-size:13px;color:#444;margin-bottom:18px;font-weight:500;">Dzień dobry,</p>
+
+  <!-- Punkt 1 -->
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
+    <div style="min-width:28px;height:28px;background:#1a3a5c;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;margin-top:1px;">1</div>
+    <div style="flex:1;">
+      <p style="font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:14px;">Aktualnie wszystkie usługi działają prawidłowo.</p>
+
+      <!-- Karty dni -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="background:#f4f8fd;border:1px solid #c8d6e5;border-radius:10px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:190px;">
+          <span style="font-size:11px;color:#666;text-align:center;line-height:1.4;">Dni bez awarii<br>Locon / serwerownia</span>
+          <span id="dni-locon" contenteditable="true" style="font-size:32px;font-weight:700;color:#1a3a5c;outline:none;min-width:50px;text-align:center;border-bottom:2px solid #2563a8;line-height:1.2;padding:0 4px;">12</span>
+          <span style="font-size:10px;color:#2563a8;font-weight:700;letter-spacing:1px;">DNI</span>
+        </div>
+        <div style="background:#f4f8fd;border:1px solid #c8d6e5;border-radius:10px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:190px;">
+          <span style="font-size:11px;color:#666;text-align:center;line-height:1.4;">Dni bez awarii<br>Operatora</span>
+          <span id="dni-op" contenteditable="true" style="font-size:32px;font-weight:700;color:#1a3a5c;outline:none;min-width:50px;text-align:center;border-bottom:2px solid #2563a8;line-height:1.2;padding:0 4px;">24</span>
+          <span style="font-size:10px;color:#2563a8;font-weight:700;letter-spacing:1px;">DNI</span>
+        </div>
+      </div>
+
+      <!-- Toggle awaria -->
+      <label style="font-size:12px;color:#c0392b;cursor:pointer;display:inline-flex;align-items:center;gap:6px;user-select:none;">
+        <input type="checkbox" id="awaria-toggle" onchange="toggleAwaria(this)" style="width:14px;height:14px;">
+        <span>Wystąpiła awaria — dodaj notatkę</span>
+      </label>
+      <div id="awaria-box" style="display:none;margin-top:10px;">
+        <div id="awaria-note" contenteditable="true"
+          style="font-size:13px;border:1px solid #f0a0a0;border-left:3px solid #c0392b;border-radius:6px;padding:10px 14px;min-height:44px;outline:none;background:#fff8f8;color:#1a1a1a;">Opisz awarię...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Punkt 2 -->
+  <div style="display:flex;gap:14px;align-items:flex-start;">
+    <div style="min-width:28px;height:28px;background:#1a3a5c;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;margin-top:1px;">2</div>
+    <div style="flex:1;">
+      <p style="font-size:13px;color:#333;line-height:1.6;">Sklep <a href="https://bezpiecznarodzina.pl/" target="_blank" style="color:#2563a8;font-weight:600;">bezpiecznarodzina.pl</a> działa poprawnie w zakresie dostępności i procesu składania zamówień.</p>
+    </div>
+  </div>
+
+</div>
+
+
+
+<!-- SLA MTD -->
+<div class="section-title">SLA MTD</div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th>Kategoria</th><th>Podmiot</th><th>SMS</th><th>www</th><th>Aplikacja mobilna</th><th>Strefy</th><th>Subskrypcje</th><th>PGPS</th><th>Suma</th>
+</tr></thead>
+<tbody id="sla-body">
+<tr>
+  <td class="cat-cell">Łącznie</td>
+  <td></td>
+  <td style="color:#166534;font-weight:600;">99.79%</td>
+  <td style="color:#166534;font-weight:600;">99.79%</td>
+  <td style="color:#166534;font-weight:600;">99.79%</td>
+  <td style="color:#166534;font-weight:600;">99.79%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">99.79%</td>
+</tr>
+<tr>
+  <td class="cat-cell">Locon (GJD, BS, BZ)</td>
+  <td></td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">99.98%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">99.99%</td>
+</tr>
+<tr>
+  <td class="cat-cell" rowspan="4">Operator</td>
+  <td>Orange</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+</tr>
+<tr>
+  <td>T-Mobile</td>
+  <td style="color:#92400e;font-weight:600;">99.15%</td>
+  <td style="color:#92400e;font-weight:600;">99.15%</td>
+  <td style="color:#92400e;font-weight:600;">99.15%</td>
+  <td style="color:#92400e;font-weight:600;">99.15%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#92400e;font-weight:600;">99.15%</td>
+</tr>
+<tr>
+  <td>Plus</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+</tr>
+<tr>
+  <td>Play</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+</tr>
+<tr>
+  <td class="cat-cell" rowspan="2">Serwerownia</td>
+  <td>ATMAN</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+</tr>
+<tr>
+  <td>GTS</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+  <td style="color:#166534;font-weight:600;">100%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="notice">Wartości z Excela. Zielony ≥99.5%, pomarańczowy ≥95%, czerwony poniżej.</p>
+
+<!-- NOWY REJESTR AWARII -->
+<div class="section-title">Nowy rejestr awarii</div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th style="width:28px;"></th>
+  <th>PRIO</th><th>Częstotliwość</th><th>STATUS</th><th>Data</th>
+  <th>KTO</th><th>Usługi</th>
+  <th>SMS (h)</th><th>www (h)</th><th>App mob. (h)</th><th>Strefy (h)</th><th>Subskr. (h)</th><th>PGPS (h)</th>
+  <th>Przyczyna</th><th>Ilość zgłoszeń</th>
+  <th>Plan naprawczy</th><th>Odpowiedzialny</th><th>Stan</th><th>Termin</th>
+</tr></thead>
+<tbody id="aw-body"></tbody>
+</table>
+</div>
+<button class="add-row-btn" onclick="addAw()">+ Nowy wiersz</button>
+<p class="notice">Kliknij dowolną komórkę, aby edytować.</p>
+
+<!-- REJESTR BŁĘDÓW -->
+<div class="section-title">Rejestr błędów</div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th style="width:28px;"></th>
+  <th style="width:90px;">Kategoria</th>
+  <th>Problem / zgłoszenie klienta</th>
+  <th>Data utworzenia</th><th>Przeterminowane?</th><th>Status</th>
+  <th>Przewidywana data rozwiązania</th><th>Ilość klientów</th><th>Link do JIRY</th>
+</tr></thead>
+<tbody id="rej-body"></tbody>
+</table>
+</div>
+<button class="add-row-btn" onclick="addRej()">+ Nowy wiersz</button>
+<p class="notice">Kliknij dowolną komórkę, aby edytować — w tym kolumnę "Status".</p>
+
+<!-- TOP 10 -->
+<div class="section-title">Nowe TOP 10 zgłoszeń</div>
+<div class="crow">
+  <label>Miesiąc:</label>
+  <select class="msel" id="msel" onchange="renderT10()"></select>
+  <span id="fbadge"></span>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th style="width:28px;"></th>
+  <th style="width:40px;">#</th>
+  <th>Kategoria zgłoszenia</th><th>Segment</th><th>Ilość</th>
+</tr></thead>
+<tbody id="t10-body"></tbody>
+</table>
+</div>
+<button class="add-row-btn" onclick="addT10()">+ Nowy wiersz</button>
+<p class="notice">Dane za wybrany miesiąc. Edytuj bezpośrednio.</p>
+
+<div class="toast" id="toast">✓ Skopiowano — wklej w Gmailu (Ctrl+V)</div>
+
+<script>
+const SC={"W PRODUKCJI":"#1e6fbf","CZEKA NA WDROŻENIE":"#b45309","CZEKA NA NOWY FW":"#9d174d","W TRAKCIE WERYFIKACJI Z CC":"#4c1d95","W TRAKCIE WERYFIKACJI Z PLK":"#4c1d95"};
+function sbS(s){const c=SC[s]||"#1e6fbf";return`background:${c}18;color:${c};padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;display:inline-block;cursor:text;outline:none;`;}
+function eT10(){return Array.from({length:10},(_,i)=>({rank:i+1,kat:"",seg:"",ilosc:""}));}
+
+/* ---- AWARIE ---- */
+const awOrig=[
+  {prio:"1.",czest:"RZADKO",stat:"ZAMKNIĘTA",data:"2026-04-11",kto:"LOCON",usl:"BR",sms:"0",www:"0",app:"0.15",str:"0",sub:"0",pgps:"0",prz:"W trakcie analizy",il:"10",plan:"Brak",odp:"MKW",stan:"ZAMKNIĘTY",term:"2026-04-11"},
+  {prio:"2.",czest:"RZADKO",stat:"ZAMKNIĘTA",data:"2026-03-30",kto:"TMPL",usl:"BR",sms:"2.15",www:"2.15",app:"2.15",str:"2.15",sub:"0",pgps:"0",prz:"Nieznana — problem po stronie TMPL",il:"0",plan:"Brak",odp:"SSP",stan:"ZAMKNIĘTY",term:"2026-03-30"},
+];
+
+/* ---- REJESTR BŁĘDÓW ---- */
+const rejOrig=[
+  {prob:"BR / Brak powiadomień ze stref",data:"2025-10-30",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-31912"},
+  {prob:"OPOS / Anulowana karta pacjenta",data:"2025-12-16",prz:"TAK",stat:"CZEKA NA WDROŻENIE",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-32797"},
+  {prob:"BR / BZ.05 / Urządzenie generuje dźwięki samoistnie",data:"2026-01-28",prz:"TAK",stat:"CZEKA NA NOWY FW",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-33412"},
+  {prob:"BR / Błędne powiadomienie ze strefy",data:"2026-03-05",prz:"TAK",stat:"W TRAKCIE WERYFIKACJI Z CC",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/PC-2652"},
+  {prob:"BR / BZ.05 / Problem z urządzeniem",data:"2026-03-18",prz:"TAK",stat:"CZEKA NA NOWY FW",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34054"},
+  {prob:"BR / Problem ze strefami",data:"2026-04-10",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34329"},
+  {prob:"Teleopieka / Błędna godzina na opaskach",data:"2026-04-14",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34385"},
+  {prob:"BR Play / Problem z logowaniem do aplikacji",data:"2026-04-16",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34397"},
+  {prob:"GJD / Błędna informacja w historii lokalizacji",data:"2026-04-17",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34405"},
+  {prob:"BR / Brak zgody na lokalizację",data:"2026-04-18",prz:"TAK",stat:"W TRAKCIE WERYFIKACJI Z PLK",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34412"},
+  {prob:"PLAY / GJD.08 / Niedokładna lokalizacja",data:"2026-04-18",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34413"},
+  {prob:"Bezpieczna Rodzina / Brak żetonów lokalizacyjnych",data:"2026-04-19",prz:"TAK",stat:"W PRODUKCJI",dataR:"2026-04-22",il:1,jira:"https://jiralocon.atlassian.net/browse/GJD-34417"},
+];
+
+/* ---- TOP 10 ---- */
+const months=[
+  {label:"Kwiecień 2026",fut:false,data:[{rank:1,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2B_TMPL",ilosc:50},{rank:2,kat:"Aktywacja pakietu za Klienta",seg:"BR_B2C",ilosc:48},{rank:3,kat:"Dezaktywacja płatności cyklicznej",seg:"BR_B2C",ilosc:46},{rank:4,kat:"Brak połączenia z urządzeniem",seg:"BR_B2C",ilosc:37},{rank:5,kat:"Zwrot urządzenia",seg:"BR_B2C",ilosc:33},{rank:6,kat:"Przepięcie pakietu",seg:"BR_B2C",ilosc:28},{rank:7,kat:"Ogólne informacje o urządzeniach",seg:"BR_B2C",ilosc:27},{rank:8,kat:"Dezaktywacja usługi",seg:"BR_lokalizacja_telefonow",ilosc:26},{rank:9,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2C",ilosc:22},{rank:10,kat:"Słaba bateria",seg:"BR_B2B_TMPL",ilosc:22}]},
+  {label:"Marzec 2026",fut:false,data:[{rank:1,kat:"Aktywacja pakietu za Klienta",seg:"BR_B2C",ilosc:78},{rank:2,kat:"Dezaktywacja usługi",seg:"BR_lokalizacja_telefonów",ilosc:77},{rank:3,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2C",ilosc:68},{rank:4,kat:"Zwrot urządzenia",seg:"BR_B2C",ilosc:57},{rank:5,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2B_TMPL",ilosc:55},{rank:6,kat:"Dezaktywacja płatności cyklicznej",seg:"BR_B2C",ilosc:54},{rank:7,kat:"Przepięcie pakietu",seg:"BR_B2C",ilosc:54},{rank:8,kat:"Brak połączenia z urządzeniem",seg:"BR_B2C",ilosc:45},{rank:9,kat:"Słaba bateria",seg:"BR_B2B_TMPL",ilosc:43},{rank:10,kat:"Ogólne informacje o urządzeniach",seg:"BR_B2C",ilosc:42}]},
+  {label:"Luty 2026",fut:false,data:[{rank:1,kat:"Aktywacja pakietu za Klienta",seg:"BR_B2C",ilosc:83},{rank:2,kat:"Dezaktywacja płatności cyklicznej",seg:"BR_B2C",ilosc:62},{rank:3,kat:"Dezaktywacja usługi",seg:"BR_lokalizacja_telefonów",ilosc:58},{rank:4,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2C",ilosc:52},{rank:5,kat:"Brak połączenia z urządzeniem",seg:"BR_B2C",ilosc:51},{rank:6,kat:"Jak aktywować pakiet",seg:"BR_B2C",ilosc:50},{rank:7,kat:"Urządzenie się nie ładuje / nie włącza",seg:"BR_B2B_TMPL",ilosc:50},{rank:8,kat:"Zwrot urządzenia",seg:"BR_B2C",ilosc:49},{rank:9,kat:"Ogólne informacje o urządzeniach",seg:"BR_B2C",ilosc:42},{rank:10,kat:"Słaba bateria",seg:"BR_B2B_TMPL",ilosc:40}]},
+  {label:"Maj 2026",fut:true,data:eT10()},{label:"Czerwiec 2026",fut:true,data:eT10()},
+  {label:"Lipiec 2026",fut:true,data:eT10()},{label:"Sierpień 2026",fut:true,data:eT10()},
+  {label:"Wrzesień 2026",fut:true,data:eT10()},{label:"Październik 2026",fut:true,data:eT10()},
+  {label:"Listopad 2026",fut:true,data:eT10()},{label:"Grudzień 2026",fut:true,data:eT10()},
+];
+
+let awRows=awOrig.map((r,i)=>({...r,id:i}));
+let rejRows=rejOrig.map((r,i)=>({...r,id:i}));
+let t10Rows=months[0].data.map((r,i)=>({...r,id:i}));
+let nAw=awOrig.length,nRej=rejOrig.length,nT=100;
+
+/* ---- RENDER AWARIE ---- */
+function renderAw(){
+  const tb=document.getElementById("aw-body");
+  tb.innerHTML="";
+  awRows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const pc=r.prio==="1."?"bp1":"bp2";
+    const sc=r.stat==="ZAMKNIĘTA"?"bzamk":"botw";
+    tr.innerHTML=`
+      <td><button class="del-btn" onclick="dAw(${r.id})">✕</button></td>
+      <td><span class="${pc}" contenteditable="true" oninput="uAw(${r.id},'prio',this.textContent)">${r.prio}</span></td>
+      <td contenteditable="true" oninput="uAw(${r.id},'czest',this.textContent)">${r.czest}</td>
+      <td><span class="${sc}" contenteditable="true" oninput="uAw(${r.id},'stat',this.textContent)">${r.stat}</span></td>
+      <td contenteditable="true" oninput="uAw(${r.id},'data',this.textContent)">${r.data}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'kto',this.textContent)">${r.kto}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'usl',this.textContent)">${r.usl}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'sms',this.textContent)">${r.sms}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'www',this.textContent)">${r.www}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'app',this.textContent)">${r.app}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'str',this.textContent)">${r.str}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'sub',this.textContent)">${r.sub}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'pgps',this.textContent)">${r.pgps}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'prz',this.textContent)" style="min-width:130px;">${r.prz}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'il',this.textContent)">${r.il}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'plan',this.textContent)" style="min-width:110px;">${r.plan}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'odp',this.textContent)">${r.odp}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'stan',this.textContent)">${r.stan}</td>
+      <td contenteditable="true" oninput="uAw(${r.id},'term',this.textContent)">${r.term}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function uAw(id,f,v){const r=awRows.find(x=>x.id===id);if(r)r[f]=v.trim();}
+function dAw(id){awRows=awRows.filter(x=>x.id!==id);renderAw();}
+function addAw(){awRows.push({id:nAw++,prio:"1.",czest:"RZADKO",stat:"OTWARTA",data:new Date().toISOString().slice(0,10),kto:"",usl:"",sms:"0",www:"0",app:"0",str:"0",sub:"0",pgps:"0",prz:"",il:"0",plan:"",odp:"",stan:"",term:""});renderAw();}
+
+/* ---- RENDER REJESTR ---- */
+function renderRej(){
+  const tb=document.getElementById("rej-body");
+  tb.innerHTML="";
+  const tot=rejRows.length;
+  rejRows.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    const cc=i===0?`<td class="cat-cell" rowspan="${tot}">MAJOR</td>`:"";
+    tr.innerHTML=`
+      <td><button class="del-btn" onclick="dRej(${r.id})">✕</button></td>${cc}
+      <td contenteditable="true" oninput="uRej(${r.id},'prob',this.textContent)">${r.prob}</td>
+      <td contenteditable="true" oninput="uRej(${r.id},'data',this.textContent)">${r.data}</td>
+      <td><select class="isel" onchange="uRej(${r.id},'prz',this.value)">
+        <option ${r.prz==="TAK"?"selected":""}>TAK</option>
+        <option ${r.prz==="NIE"?"selected":""}>NIE</option>
+      </select></td>
+      <td><span id="sb${r.id}" style="${sbS(r.stat)}" contenteditable="true"
+        oninput="uRejS(${r.id},this.textContent)" onblur="uRejS(${r.id},this.textContent)">${r.stat}</span></td>
+      <td contenteditable="true" oninput="uRej(${r.id},'dataR',this.textContent)">${r.dataR}</td>
+      <td contenteditable="true" oninput="uRej(${r.id},'il',this.textContent)">${r.il}</td>
+      <td><a href="${r.jira}" target="_blank" class="jira-a" id="ja${r.id}">${r.jira.split("/").pop()||"—"}</a><br>
+      <input type="text" class="jira-i" value="${r.jira}" onchange="uJira(${r.id},this.value)"></td>`;
+    tb.appendChild(tr);
+  });
+}
+function uRejS(id,v){const r=rejRows.find(x=>x.id===id);if(!r)return;r.stat=v.trim();const b=document.getElementById("sb"+id);if(b)b.style.cssText=sbS(r.stat);}
+function uRej(id,f,v){const r=rejRows.find(x=>x.id===id);if(r)r[f]=v.trim();}
+function uJira(id,v){const r=rejRows.find(x=>x.id===id);if(r){r.jira=v.trim();const a=document.getElementById("ja"+id);if(a){a.href=v;a.textContent=v.split("/").pop()||"—";}}}
+function dRej(id){rejRows=rejRows.filter(x=>x.id!==id);renderRej();}
+function addRej(){rejRows.push({id:nRej++,prob:"Nowe zgłoszenie",data:new Date().toISOString().slice(0,10),prz:"NIE",stat:"W PRODUKCJI",dataR:"",il:1,jira:""});renderRej();}
+
+/* ---- RENDER TOP 10 ---- */
+function renderT10(){
+  const idx=parseInt(document.getElementById("msel").value||0);
+  const m=months[idx];
+  t10Rows=m.data.map((r,i)=>({...r,id:i}));
+  document.getElementById("fbadge").innerHTML=m.fut?`<span class="bfut">do uzupełnienia</span>`:"";
+  renderT10p();
+}
+function renderT10p(){
+  const tb=document.getElementById("t10-body");
+  tb.innerHTML="";
+  t10Rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const rc=r.rank===1?"r1":r.rank===2?"r2":r.rank===3?"r3":"";
+    const sh=r.seg?`<span class="seg-pill" contenteditable="true" oninput="uT(${r.id},'seg',this.textContent)">${r.seg}</span>`:`<span class="empty-pill" contenteditable="true" oninput="uT(${r.id},'seg',this.textContent)">—</span>`;
+    tr.innerHTML=`
+      <td><button class="del-btn" onclick="dT(${r.id})">✕</button></td>
+      <td><span class="rank-badge ${rc}">${r.rank}</span></td>
+      <td style="color:${!r.kat?"#aaa":"inherit"};" contenteditable="true" oninput="uT(${r.id},'kat',this.textContent)">${r.kat||"—"}</td>
+      <td>${sh}</td>
+      <td style="font-weight:600;color:${!r.ilosc?"#aaa":"inherit"};" contenteditable="true" oninput="uT(${r.id},'ilosc',this.textContent)">${r.ilosc||"—"}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function uT(id,f,v){const r=t10Rows.find(x=>x.id===id);if(r)r[f]=v.trim()==="—"?"":v.trim();}
+function dT(id){t10Rows=t10Rows.filter(x=>x.id!==id);renderT10p();}
+function addT10(){t10Rows.push({id:nT++,rank:t10Rows.length+1,kat:"",seg:"",ilosc:""});renderT10p();}
+
+/* ---- RESET ---- */
+function resetAll(){
+  if(!confirm("Resetować dane do oryginalnych wartości?"))return;
+  awRows=awOrig.map((r,i)=>({...r,id:i}));nAw=awOrig.length;
+  rejRows=rejOrig.map((r,i)=>({...r,id:i}));nRej=rejOrig.length;nT=100;
+  renderAw();renderRej();
+  document.getElementById("msel").value="0";renderT10();
+}
+
+/* ---- COPY TO GMAIL ---- */
+function copyAll(){
+  const idx=parseInt(document.getElementById("msel").value||0);
+  const ml=months[idx]?.label||"Kwiecień 2026";
+  const tot=rejRows.length;
+  const dniLocon = document.getElementById("dni-locon").textContent.trim();
+  const dniOp = document.getElementById("dni-op").textContent.trim();
+  const awariaOn = document.getElementById("awaria-toggle").checked;
+  const awariaNote = document.getElementById("awaria-note").textContent.trim();
+  let h=`<div style="font-family:Arial,sans-serif;font-size:13px;">`;
+
+  h+=`<p style="font-size:13px;color:#444;margin-bottom:18px;font-weight:500;">Dzień dobry,</p>`;
+
+  h+=`<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
+    <div style="min-width:28px;height:28px;background:#1a3a5c;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">1</div>
+    <div style="flex:1;">
+      <p style="font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:14px;">Aktualnie wszystkie usługi działają prawidłowo.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="background:#f4f8fd;border:1px solid #c8d6e5;border-radius:10px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:190px;">
+          <span style="font-size:11px;color:#666;text-align:center;line-height:1.4;">Dni bez awarii<br>Locon / serwerownia</span>
+          <span style="font-size:32px;font-weight:700;color:#1a3a5c;line-height:1.2;">${dniLocon}</span>
+          <span style="font-size:10px;color:#2563a8;font-weight:700;letter-spacing:1px;">DNI</span>
+        </div>
+        <div style="background:#f4f8fd;border:1px solid #c8d6e5;border-radius:10px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:190px;">
+          <span style="font-size:11px;color:#666;text-align:center;line-height:1.4;">Dni bez awarii<br>Operatora</span>
+          <span style="font-size:32px;font-weight:700;color:#1a3a5c;line-height:1.2;">${dniOp}</span>
+          <span style="font-size:10px;color:#2563a8;font-weight:700;letter-spacing:1px;">DNI</span>
+        </div>
+      </div>
+      ${awariaOn && awariaNote ? `<div style="font-size:13px;color:#b91c1c;border-left:3px solid #c0392b;border-radius:4px;padding:8px 14px;background:#fff8f8;margin-bottom:8px;">⚠️ ${awariaNote}</div>` : ''}
+    </div>
+  </div>`;
+
+  h+=`<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
+    <div style="min-width:28px;height:28px;background:#1a3a5c;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">2</div>
+    <div style="flex:1;">
+      <p style="font-size:13px;color:#333;line-height:1.6;">Sklep <a href="https://bezpiecznarodzina.pl/" style="color:#2563a8;font-weight:600;">bezpiecznarodzina.pl</a> działa poprawnie w zakresie dostępności i procesu składania zamówień.</p>
+    </div>
+  </div>`;
+
+  // SLA
+  h+=`<p style="font-weight:bold;font-size:14px;margin-bottom:6px;color:#1a3a5c;">SLA MTD</p>`;
+  h+=`<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:12px;border-color:#c8d6e5;">`;
+  h+=`<tr style="background:#1a3a5c;color:#fff;text-align:center;"><th>Kategoria</th><th>Podmiot</th><th>SMS</th><th>www</th><th>Aplikacja mobilna</th><th>Strefy</th><th>Subskrypcje</th><th>PGPS</th><th>Suma</th></tr>`;
+  const slaData=[
+    {kat:"Łącznie",rs:1,pod:"",v:["99.79%","99.79%","99.79%","99.79%","100%","100%","99.79%"]},
+    {kat:"Locon (GJD, BS, BZ)",rs:1,pod:"",v:["100%","100%","99.98%","100%","100%","100%","99.99%"]},
+    {kat:"Operator",rs:4,pod:"Orange",v:["100%","100%","100%","100%","100%","100%","100%"]},
+    {kat:"",rs:0,pod:"T-Mobile",v:["99.15%","99.15%","99.15%","99.15%","100%","100%","99.15%"]},
+    {kat:"",rs:0,pod:"Plus",v:["100%","100%","100%","100%","100%","100%","100%"]},
+    {kat:"",rs:0,pod:"Play",v:["100%","100%","100%","100%","100%","100%","100%"]},
+    {kat:"Serwerownia",rs:2,pod:"ATMAN",v:["100%","100%","100%","100%","100%","100%","100%"]},
+    {kat:"",rs:0,pod:"GTS",v:["100%","100%","100%","100%","100%","100%","100%"]},
+  ];
+  slaData.forEach((r,i)=>{
+    const bg=i%2===0?"#f4f8fd":"#fff";
+    let kc="";
+    if(r.rs===1)kc=`<td style="background:#1a3a5c;color:#fff;font-weight:bold;text-align:center;vertical-align:middle;">${r.kat}</td>`;
+    else if(r.rs>1)kc=`<td rowspan="${r.rs}" style="background:#1a3a5c;color:#fff;font-weight:bold;text-align:center;vertical-align:middle;">${r.kat}</td>`;
+    const vc=r.v.map(v=>{
+      const n=parseFloat(v);const cl=isNaN(n)?"":n>=99.5?"color:#166534;font-weight:600;":n>=95?"color:#92400e;font-weight:600;":"color:#b91c1c;font-weight:600;";
+      return`<td style="text-align:center;${cl}">${v}</td>`;
+    }).join("");
+    h+=`<tr style="background:${bg};">${kc}<td style="text-align:center;">${r.pod}</td>${vc}</tr>`;
+  });
+  h+=`</table>`;
+
+  // AWARIE
+  h+=`<p style="font-weight:bold;font-size:14px;margin:18px 0 6px;color:#1a3a5c;">Nowy rejestr awarii</p>`;
+  h+=`<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:11px;border-color:#c8d6e5;">`;
+  h+=`<tr style="background:#1a3a5c;color:#fff;text-align:center;"><th>PRIO</th><th>Częstotliwość</th><th>STATUS</th><th>Data</th><th>KTO</th><th>Usługi</th><th>SMS(h)</th><th>www(h)</th><th>App(h)</th><th>Strefy(h)</th><th>Subskr.(h)</th><th>PGPS(h)</th><th>Przyczyna</th><th>Zgłosz.</th><th>Plan naprawczy</th><th>Odp.</th><th>Stan</th><th>Termin</th></tr>`;
+  awRows.forEach((r,i)=>{
+    const bg=i%2===0?"#f4f8fd":"#fff";
+    const pc=r.prio==="1."?"#b91c1c":"#d35400";
+    const sc=r.stat==="ZAMKNIĘTA"?"#166534":"#b91c1c";
+    h+=`<tr style="background:${bg};text-align:center;"><td style="color:${pc};font-weight:700;">${r.prio}</td><td>${r.czest}</td><td style="color:${sc};font-weight:600;">${r.stat}</td><td>${r.data}</td><td>${r.kto}</td><td>${r.usl}</td><td>${r.sms}</td><td>${r.www}</td><td>${r.app}</td><td>${r.str}</td><td>${r.sub}</td><td>${r.pgps}</td><td style="text-align:left;">${r.prz}</td><td>${r.il}</td><td style="text-align:left;">${r.plan}</td><td>${r.odp}</td><td>${r.stan}</td><td>${r.term}</td></tr>`;
+  });
+  h+=`</table>`;
+
+  // REJESTR
+  h+=`<p style="font-weight:bold;font-size:14px;margin:18px 0 6px;color:#1a3a5c;">Rejestr błędów</p>`;
+  h+=`<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:12px;border-color:#c8d6e5;">`;
+  h+=`<tr style="background:#1a3a5c;color:#fff;text-align:center;"><th>Kategoria</th><th>Problem / zgłoszenie klienta</th><th>Data utworzenia</th><th>Przeterminowane?</th><th>Status</th><th>Przewidywana data rozwiązania</th><th>Ilość klientów</th><th>Link do JIRY</th></tr>`;
+  rejRows.forEach((r,i)=>{
+    const bg=i%2===0?"#f4f8fd":"#fff";
+    const sc=SC[r.stat]||"#1e6fbf";
+    const pc=r.prz==="TAK"?"#b91c1c":"#166534";
+    const kc=i===0?`<td rowspan="${tot}" style="background:#1a3a5c;color:#fff;font-weight:bold;text-align:center;vertical-align:middle;">MAJOR</td>`:"";
+    h+=`<tr style="background:${bg};text-align:center;">${kc}<td>${r.prob}</td><td>${r.data}</td><td style="color:${pc};font-weight:bold;">${r.prz}</td><td><span style="background:${sc}20;color:${sc};padding:2px 7px;border-radius:10px;font-size:11px;">${r.stat}</span></td><td>${r.dataR}</td><td>${r.il}</td><td><a href="${r.jira}" style="color:#2563a8;">${r.jira.split("/").pop()||"—"}</a></td></tr>`;
+  });
+  h+=`</table>`;
+
+  // TOP 10
+  h+=`<p style="font-weight:bold;font-size:14px;margin:18px 0 6px;color:#1a3a5c;">Nowe TOP 10 zgłoszeń — ${ml}</p>`;
+  h+=`<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:12px;border-color:#c8d6e5;">`;
+  h+=`<tr style="background:#1a3a5c;color:#fff;text-align:center;"><th>#</th><th>Kategoria zgłoszenia</th><th>Segment</th><th>Ilość</th></tr>`;
+  t10Rows.forEach((r,i)=>{
+    const bg=i%2===0?"#f4f8fd":"#fff";
+    const rc=r.rank===1?"#c0392b":r.rank===2?"#d35400":r.rank===3?"#1a6ebf":"#1a3a5c";
+    h+=`<tr style="background:${bg};text-align:center;"><td style="font-weight:bold;color:${rc};">${r.rank}</td><td>${r.kat||""}</td><td><span style="background:#e6f1fb;color:#0c447c;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;">${r.seg||""}</span></td><td style="font-weight:bold;">${r.ilosc||""}</td></tr>`;
+  });
+  h+=`</table></div>`;
+
+  navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"})})]).then(()=>{
+    const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);
+  }).catch(()=>alert("Nie udało się skopiować. Zaznacz i skopiuj ręcznie."));
+}
+
+
+function toggleAwaria(cb){
+  document.getElementById("awaria-box").style.display = cb.checked ? "block" : "none";
+}
+
+/* ---- INIT ---- */
+(function(){
+  const s=document.getElementById("msel");
+  months.forEach((m,i)=>{const o=document.createElement("option");o.value=i;o.textContent=m.label+(m.fut?" ✦":"");s.appendChild(o);});
+})();
+renderAw();
+renderRej();
+renderT10();
+</script>
+</body>
+</html>
