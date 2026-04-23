@@ -84,7 +84,6 @@ select.isel{font-size:11px;border:1px solid #c8d6e5;border-radius:4px;padding:2p
   <button onclick="addT10()">+ Wiersz (TOP 10)</button>
   <button onclick="resetAll()">↺ Resetuj</button>
   <div id="sync-bar"><div id="sync-dot"></div><span id="sync-label">Niepołączono</span></div>
-  <button onclick="zapiszDane()" style="background:#166534;color:#fff;border-color:#166534;">💾 Zapisz dane</button>
 </div>
 
 <!-- WSTĘP -->
@@ -782,25 +781,6 @@ function toggleAwaria(cb){
   document.getElementById("awaria-box").style.display=cb.checked?"block":"none";
 }
 
-function zapiszDane(){
-  const dniLocon=document.getElementById("dni-locon").textContent.trim();
-  const dniOp=document.getElementById("dni-op").textContent.trim();
-  const awariaOn=document.getElementById("awaria-toggle").checked;
-  const awariaNote=document.getElementById("awaria-note").textContent.trim();
-  let html=document.documentElement.outerHTML;
-  // Wstaw zapisane dane jako blok JS na początku skryptu
-  const saved=`const _S=${JSON.stringify({dniLocon,dniOp,awariaOn,awariaNote,awRows,rejRows,t10Months:months.map((m,i)=>({...m,data:i===parseInt(document.getElementById("msel").value)?t10Rows:m.data})),miesiac:document.getElementById("msel").value})};`;
-  html=html.replace(/\/\* SAVED \*\/[\s\S]*?(?=function|const |let |var |\/\*)/,'');
-  html=html.replace('<script>',`<script>
-${saved}
-`);
-  const blob=new Blob([html],{type:'text/html'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='UHD_raport_kompletny.html';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
 
 function _wczytaj(){
   if(typeof _S==='undefined')return;
