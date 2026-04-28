@@ -835,7 +835,7 @@ if(typeof _S!=="undefined"){renderAw();renderRej();renderT10();}
 /* ============================
    GOOGLE APPS SCRIPT SYNC
    ============================ */
-let GAS_URL = localStorage.getItem('uhd_gas_url') || '';
+let GAS_URL = localStorage.getItem('uhd_gas_url') || 'https://script.google.com/macros/s/AKfycbxQAeHOi7HOzROjFTlFTszJ3n7yLJ1U_nbPpHKOGXhs0KJZclC9hUDRj8gqSJ5gqQIT6w/exec';
 let _saveTimer = null;
 let _pollTimer = null;
 
@@ -882,12 +882,13 @@ function skipGAS(){
 }
 
 async function gasLoad(){
-  const r=await fetch(GAS_URL+'?action=load&t='+Date.now());
+  const r=await fetch(GAS_URL+'?action=load&t='+Date.now(),{redirect:'follow'});
   if(!r.ok) throw new Error('HTTP '+r.status);
-  const d=await r.json();
+  const text=await r.text();
+  let d;
+  try{d=JSON.parse(text);}catch(e){throw new Error('Błąd parsowania odpowiedzi');}
   if(d.error) throw new Error(d.error);
   if(d.status==='empty') return;
-  // Zastosuj dane
   if(d.awRows){awRows=d.awRows;nAw=Math.max(nAw,...awRows.map(x=>x.id+1));renderAw();}
   if(d.rejRows){rejRows=d.rejRows;nRej=Math.max(nRej,...rejRows.map(x=>x.id+1));renderRej();}
   if(d.t10){d.t10.forEach((m,i)=>{if(months[i])months[i].data=m;});renderT10();}
@@ -919,11 +920,23 @@ function gasSave(immediate){
   setSS('saving','Zapisywanie...');
   const doSave=async()=>{
     try{
-      const r=await fetch(GAS_URL+'?action=save',{method:'POST',body:JSON.stringify(gasBuildPayload())});
-      const d=await r.json();
+      const payload=JSON.stringify(gasBuildPayload());
+      const encoded=encodeURIComponent(payload);
+      // Próbuj POST najpierw, fallback na GET z danymi
+      let r,d;
+      try{
+        r=await fetch(GAS_URL+'?action=save',{method:'POST',body:payload,redirect:'follow'});
+        const text=await r.text();
+        d=JSON.parse(text);
+      }catch(e){
+        // Fallback: GET z danymi w parametrze (dla problemów z CORS)
+        r=await fetch(GAS_URL+'?action=save&data='+encoded,{redirect:'follow'});
+        const text=await r.text();
+        d=JSON.parse(text);
+      }
       if(d.status==='ok') setSS('connected','✓ Zapisano '+new Date().toLocaleTimeString('pl'));
       else setSS('error','✗ '+(d.error||'Błąd'));
-    }catch(e){setSS('error','✗ Brak połączenia');}
+    }catch(e){setSS('error','✗ '+e.message);}
   };
   if(immediate)doSave();
   else _saveTimer=setTimeout(doSave,1200);
@@ -947,14 +960,12 @@ function startPoll(){
 
 // Auto-init
 (function initGAS(){
-  const saved=localStorage.getItem('uhd_gas_url');
-  if(saved){
-    GAS_URL=saved;
-    document.getElementById('gas-overlay').style.display='none';
-    setSS('','Łączenie...');
-    gasLoad().then(()=>{setSS('connected','✓ Połączono');startPoll();})
-             .catch(()=>setSS('error','✗ Błąd — sprawdź Web App'));
-  }
+  // Ukryj overlay od razu — URL jest wbudowany
+  document.getElementById('gas-overlay').style.display='none';
+  setSS('','Łączenie...');
+  gasLoad()
+    .then(()=>{setSS('connected','✓ Połączono');startPoll();})
+    .catch((e)=>{setSS('error','✗ Błąd: '+e.message);console.error(e);});
 })();
 </script>
 </body></html>
